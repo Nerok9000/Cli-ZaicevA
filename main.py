@@ -16,7 +16,7 @@ def read_library():
                 return content
             return []
     except json.JSONDecodeError:
-        print("Файл с книгами повреждён. Будет открыт пустой список.")
+        print("Не удалось прочитать books.json. Открыт пустой журнал.")
         return []
 
 
@@ -29,20 +29,21 @@ def write_library(records):
 def ask_mark():
     """Запрашивает оценку от 1 до 5."""
     while True:
-        raw_value = input("Поставьте оценку книге от 1 до 5: ").strip()
+        raw_value = input("Оцените книгу по шкале от 1 до 5: ").strip()
 
         try:
             mark = int(raw_value)
         except ValueError:
-            print("Нужно ввести число, например 4.")
+            print("Введите именно число. Например: 4.")
             continue
 
         if 1 <= mark <= 5:
             return mark
 
-        print("Оценка должна быть в диапазоне от 1 до 5.")
+        print("Оценка должна быть целым числом от 1 до 5.")
 
 
+# Проверка нужна, чтобы пользователь не добавлял одну и ту же книгу повторно.
 def already_exists(records, writer, book_name):
     """Проверяет, есть ли такая книга в журнале чтения."""
     normalized_writer = writer.strip().casefold()
@@ -51,6 +52,7 @@ def already_exists(records, writer, book_name):
     for item in records:
         same_writer = item["author"].strip().casefold() == normalized_writer
         same_name = item["title"].strip().casefold() == normalized_name
+
         if same_writer and same_name:
             return True
 
@@ -61,22 +63,22 @@ def add_new_record():
     """Добавляет новую прочитанную книгу."""
     library = read_library()
 
-    writer = input("Введите автора: ").strip()
-    book_name = input("Введите название произведения: ").strip()
+    writer = input("Автор книги: ").strip()
+    book_name = input("Название книги: ").strip()
 
     if not writer or not book_name:
-        print("Автор и название не могут быть пустыми.")
+        print("Запись не создана: автор и название обязательны.")
         return
 
     if already_exists(library, writer, book_name):
-        print("Такая книга уже записана в журнал. Повтор не добавлен.")
+        print("Такая книга уже есть в журнале. Дубликат не сохранён.")
         return
 
     mark = ask_mark()
-    finish_date = input("Укажите дату прочтения, например 23.05.2026: ").strip()
+    finish_date = input("Дата прочтения, например 23.05.2026: ").strip()
 
     if not finish_date:
-        print("Дата прочтения не заполнена. Запись отменена.")
+        print("Запись отменена: дата прочтения не указана.")
         return
 
     new_item = {
@@ -88,7 +90,8 @@ def add_new_record():
 
     library.append(new_item)
     write_library(library)
-    print("Запись добавлена в читательский журнал.")
+
+    print("Книга успешно добавлена в журнал.")
 
 
 def show_records():
@@ -96,14 +99,14 @@ def show_records():
     library = read_library()
 
     if not library:
-        print("Пока нет ни одной сохранённой книги.")
+        print("Журнал пока пуст. Добавьте первую книгу через пункт 1.")
         return
 
-    print("\nВаш читательский журнал:")
+    print("\nСохранённые книги:")
     for position, item in enumerate(library, start=1):
         print(
             f"{position}. {item['author']} — {item['title']} | "
-            f"оценка: {item['rating']} | дата: {item['read_date']}"
+            f"оценка: {item['rating']} | прочитано: {item['read_date']}"
         )
 
 
@@ -112,13 +115,13 @@ def show_average_mark():
     library = read_library()
 
     if not library:
-        print("Среднюю оценку пока считать не из чего.")
+        print("Нет данных для расчёта средней оценки.")
         return
 
     total = sum(item["rating"] for item in library)
     average = total / len(library)
 
-    print(f"Средняя оценка по прочитанным книгам: {average:.2f}")
+    print(f"Средняя оценка книг в журнале: {average:.2f}")
 
 
 def show_writer_summary():
@@ -126,7 +129,7 @@ def show_writer_summary():
     library = read_library()
 
     if not library:
-        print("Статистика авторов пока пустая.")
+        print("Сводка по авторам пока недоступна: журнал пуст.")
         return
 
     summary = {}
@@ -135,9 +138,9 @@ def show_writer_summary():
         writer = item["author"]
         summary[writer] = summary.get(writer, 0) + 1
 
-    print("\nСтатистика по авторам:")
+    print("\nСводка по авторам:")
     for writer, amount in summary.items():
-        print(f"{writer}: {amount} книг(и)")
+        print(f"{writer}: {amount} записей")
 
 
 def remove_record():
@@ -145,19 +148,19 @@ def remove_record():
     library = read_library()
 
     if not library:
-        print("Удалять нечего: список книг пуст.")
+        print("Удаление невозможно: в журнале пока нет книг.")
         return
 
     show_records()
 
     try:
-        number = int(input("Введите номер книги для удаления: ").strip())
+        number = int(input("Укажите номер записи для удаления: ").strip())
     except ValueError:
-        print("Нужно ввести номер из списка.")
+        print("Нужно ввести номер записи, например 1.")
         return
 
     if number < 1 or number > len(library):
-        print("Книги с таким номером нет.")
+        print("Записи с таким номером нет.")
         return
 
     removed = library.pop(number - 1)
@@ -168,19 +171,19 @@ def remove_record():
 
 def print_actions():
     """Выводит главное меню."""
-    print("\n=== Журнал прочитанных книг ===")
-    print("1. Записать новую книгу")
-    print("2. Вывести весь журнал")
-    print("3. Рассчитать среднюю оценку")
+    print("\n=== Электронный журнал чтения ===")
+    print("1. Добавить прочитанную книгу")
+    print("2. Показать список книг")
+    print("3. Посчитать среднюю оценку")
     print("4. Показать сводку по авторам")
-    print("5. Удалить запись о книге")
-    print("6. Завершить работу")
+    print("5. Удалить книгу из журнала")
+    print("6. Выйти")
 
 
 def main():
     while True:
         print_actions()
-        command = input("Введите номер действия: ").strip()
+        command = input("Выберите команду: ").strip()
 
         if command == "1":
             add_new_record()
@@ -193,10 +196,10 @@ def main():
         elif command == "5":
             remove_record()
         elif command == "6":
-            print("Программа завершена. Данные сохранены в books.json.")
+            print("Работа завершена. Изменения сохранены в books.json.")
             break
         else:
-            print("Такого пункта меню нет. Выберите число от 1 до 6.")
+            print("Команда не распознана. Введите число от 1 до 6.")
 
 
 if __name__ == "__main__":
