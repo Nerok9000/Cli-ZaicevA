@@ -161,7 +161,7 @@ def remove_record():
         return
 
     if number < 1 or number > len(library):
-        print("Записи с таким номером нет.")
+        print("Записи с таким номером нет. Удаление отменено.")
         return
 
     removed = library.pop(number - 1)
