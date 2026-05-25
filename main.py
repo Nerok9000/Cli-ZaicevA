@@ -103,7 +103,7 @@ def show_records():
         print("Журнал пока пуст. Добавьте первую книгу через пункт 1.")
         return
 
-    print("\nСохранённые книги:")
+    print("\n=== Список прочитанных книг ===")
     for position, item in enumerate(library, start=1):
         print(
             f"{position}. {item['author']} — {item['title']} | "
